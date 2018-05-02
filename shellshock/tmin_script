@@ -1,0 +1,62 @@
+#!/bin/bash
+FILES1=/home/ian/Documents/fuzzballs/shellshock/out/fuzzer01/crashes/*
+FILES2=/home/ian/Documents/fuzzballs/shellshock/out/fuzzer02/crashes/*
+FILES3=/home/ian/Documents/fuzzballs/shellshock/out/fuzzer03/crashes/*
+FILES4=/home/ian/Documents/fuzzballs/shellshock/out/fuzzer04/crashes/*
+
+i=1
+
+for file in $FILES1
+do
+  file_out="out_min/1-$i"
+  echo "scanning for: $file_out"
+  if [ ! -f "$file_out" ]
+  then
+    echo "processing $file"
+    afl-tmin -i $file -o /home/ian/Documents/fuzzballs/shellshock/out_min/1-$i -m 1000000 -t 3000 ./shocker
+  fi
+  let "i += 1"
+done
+
+i=1
+
+for file in $FILES2
+do
+  file_out="out_min/2-$i"
+  echo "scanning for: $file_out"
+  if [ ! -f "$file_out" ]
+  then
+    echo "processing $file"
+    afl-tmin -i $file -o /home/ian/Documents/fuzzballs/shellshock/out_min/2-$i -m 1000000 -t 3000 ./shocker
+  fi
+  let "i += 1"
+done
+
+i=1
+
+for file in $FILES3
+do
+  file_out="out_min/3-$i"
+  echo "scanning for: $file_out"
+  if [ ! -f "$file_out" ]
+  then
+    echo "processing $file"
+    afl-tmin -i $file -o /home/ian/Documents/fuzzballs/shellshock/out_min/3-$i -m 1000000 -t 3000 ./shocker
+  fi
+  let "i += 1"
+done
+
+i=1
+
+for file in $FILES4
+do
+  file_out="out_min/4-$i"
+  echo "scanning for: $file_out"
+  if [ ! -f "$file_out" ]
+  then
+    echo "processing $file"
+    afl-tmin -i $file -o /home/ian/Documents/fuzzballs/shellshock/out_min/4-$i -m 1000000 -t 3000 ./shocker
+  fi
+let "i += 1"
+done
+

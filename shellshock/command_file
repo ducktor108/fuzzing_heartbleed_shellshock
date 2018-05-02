@@ -1,0 +1,1 @@
+HTTP_COOKIE='() { 0; }; echo hi mom;' bash -c

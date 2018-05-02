@@ -1,0 +1,74 @@
+Slide 1: ./
+    Fuzzing – simple, yet invaluable
+
+Slide 2: ./background
+    Fuzzing is a software testing technique, originally developed by Barton Miller in 1989.
+
+    //zero day
+    By performing fuzzing on their programs before release, developers can find and patch the vulnerabilities before they are exploited by attackers.
+
+    //bug hunting
+    However, by that same token, fuzzing can also be used by attackers to find weakness and exploits. They might then report these vulnerabilities, or use them to attack the system.
+
+Slide 3: ./background
+    For it to work, a fuzzer needs the program/system (either source code or the binary) and, optionally a series of inputs cases.
+
+    By generating massive amounts of random data from the input cases, known as fuzz, and using them as inputs to the program/system, the fuzzing tool attempts to make the software crash.
+
+    Input cases that cause a crash are then stored for the user to review later on.
+
+    //effective
+    Fuzzing offers a high benefit-to-cost ratio, due to its simplicity, low cost, and effectiveness against program crashing issues, such as buffer overflow, DoS, and SQL injection.
+
+    //not great
+    Fuzzing, however, is not suited to dealing with issues that do not cause program crashes, such as spyware, Trojans, keyloggers, and certain viruses and worms.
+
+Slide 4: ./background/afl
+    American Fuzzy Lop (AFL) is our fuzzing tool for this project. It was developed by Michal Zalewski, and is an especially effective fuzzer. Its strengths lie in creating inputs and tracking which branches are taken in a program, instead of completely random inputs.
+
+    However, it is still unable to detect problems if they do not cause a crash, which includes memory access errors and buffer overflows.
+
+Slide 5: ./background/asan
+    Address Sanitizer (ASan) was developed by Google, and can circumvent this by crashing programs when they encounter a memory access error, thus allowing their detection by AFL.
+
+Slide 6: ./heartbleed
+    Heartbleed is a security bug in the OpenSSL library, which is widely used in implementations of the Transport Layer Security (TLS) protocol. First introduced into the code in 2012, the bug results from improper input validation in the TLS heartbeat extension, a vulnerability classified as buffer over-read. It was publicly disclosed in Apr 2014.
+
+    //how does it work? - 1
+    The heartbeat extension is a way to test and keep secure communication links alive.
+    Typically, one entity sends a Heartbeat Request message, consisting of a payload and its length. The other entity will respond with the exact same payload back to the sender.
+
+    //how does it work? - 2
+    However, due to improper input validation, it is possible for a malicious user to indicate a payload length greater than the actual payload. A vulnerable version of OpenSSL would respond with the payload, along with whatever happened to be in following memory.
+
+Slide 7: ./heartbleed/results
+    The challenge is to rediscover this legendary bug. A wrapper for the affected OpenSSL library is compiled with ASan and used as the program-to-be-fuzzed, along with a typical message from an SSL handshake as the input case.
+
+    //asan
+    After running the fuzzer overnight, it generated a few cases which resulted in a crash. Using one of these cases as the input to the wrapper results in output from ASan. The error is a heap buffer overflow – it's the heartbleed bug.
+
+    We found the heartbleed bug by fuzzing the OpenSSL library for less than a day. So that's one bug down. Next...
+
+Slide 8: ./shellshock
+    Shellshock is a family of security bugs in the Unix Bash shell. Many internet-facing services that rely on Bash to process certain requests, allowing an attacker to execute arbitrary commands on systems with vulnerable versions of Bash. The bugs have existed in Bash since 1989 and were patched in 2014.
+
+    //how does it work?
+    Bash allows for defining environment variables before running the actual command. Adding an unexpected command before closing an environment variable results in bash running the unexpected command before the expected one. In this case, appending it to the end of a HTTP cookie results in 'unexpected command' appearing before 'real command'.
+
+    Shellshock has been compared with heartbleed in terms of its severity. An attacker could potentially run any command he wished on an affected server.
+
+Slide 9: ./shellshock/results
+    Similar to the heartbleed bug, a wrapper for the affected version of bash is used as the program-to-be-fuzzed, along with a rudimentary function as the input seed.
+
+    //result - 1
+    It only took a few hours to start running into crashes. The first crash case was minimized (simplified as much as possible while still yielding the same error) to this function: () { 0;}0
+
+    Running it in the vulnerable version of bash results in a segmentation fault. The shellshock bug is more obvious if we change the 0 to something else.
+
+    //result - 2
+    Instead of 0, we use 'echo hi mom' and we can immediately see the difference between the vulnerable version of bash and its patched counterpart. The vulernable bash runs the hi mom command, even though it was defined as part of an environment variable.
+
+    This is it! Our fuzzer has now found 2 well known bugs!
+
+Slide 10: ./conclusion
+    From what we've seen, there is no reason not to use fuzzing to test our software. It requires minimal time and effort, and yet is capable of finding bugs that have the potential to cause irreparable damage. We've just seen how it easily handled both heartbleed and shellshock – million dollar bugs, found in less than a day.

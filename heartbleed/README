@@ -1,0 +1,44 @@
+Heartbleed
+Heartbleed is a security bug in the OpenSSL library, which is widely used in implementations of the Transport Layer Security (TLS) protocol. First introduced into the code in 2012, the bug results from improper input validation in the TLS heartbeat extension, a vulnerability classified as buffer over-read. It was publicly disclosed in Apr 2014.
+
+This bug was patched in OpenSSL version 1.0.1g.
+
+
+Replicating this bug:
+1. Create a working folder
+    1. $ mkdir heartbleed
+    2. $ cd heartbleed
+2. Install AFL
+    1. $ sudo apt-get install afl
+3. Install libssl
+    1. $ sudo apt-get install libssl-dev
+    2. note: use aptitude to install old version if unmet dependencies
+4. Download and compile openssl-1.0.1f
+    1. $ wget https://www.openssl.org/source/old/1.0.1/openssl-1.0.1f.tar.gz
+    2. $ cd openssl-1.0.1f
+    3. $ ./config; make
+    4. $ cd .. (go back to project root)
+5. download and extract hanno's demo script
+    1. $ wget https://github.com/hanno/selftls/archive/master.zip
+    2. $ unzip master.zip
+    3. $ mv selftls-master/ selftls/ (rename folder)
+6. compile hanno’s demo script with afl-gcc
+    1. $ AFL_USE_ASAN=1 afl-gcc selftls/selftls.c -o selftls/selftls.out openssl-1.0.1f/libssl.a openssl-1.0.1f/libcrypto.a -ldl
+7. run selftls.out once, use the script’s output as fuzzer input
+    1. $ mkdir in
+    2. $ cd selftls
+    3. $./selftls.out
+    4. $ cp packet-1 ../in (copy packet to in folder)
+    5. $ cd .. (go back to project root)
+8. run afl fuzzer
+    1. $ cd selftls
+    2. $ afl-fuzz -i ../in -o ../out -m 100000000 -t 5000 ./selftls.out 1 @@
+9. [optional] use parallel fuzzing (to utilize more than 1 core)
+    1. $ afl-fuzz -i ../in -o ../out -M fuzzer01 -m 100000000 -t 5000 ./selftls.out 1 @@
+    2. $ afl-fuzz -i ../in -o ../out -S fuzzer02 -m 100000000 -t 5000 ./selftls.out 1 @@
+    3. (repeat for available cores)
+10. Wait for AFL to find crashes
+    1. cases that cause crash can be found under out/crashes
+    2. use case as input to script:
+        1. $ cd selftls
+        2. $ ./selftls.out 1 ../out/crashes/id\:000[…]
